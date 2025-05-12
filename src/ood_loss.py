@@ -1,6 +1,6 @@
 import torch
 import math
-from submodules.met3r.met3r.met3r import MEt3R
+from met3r.met3r import MEt3R
 from torchvision import transforms
 from torch.nn import functional as F
 
