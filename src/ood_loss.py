@@ -1,10 +1,12 @@
 import torch
-from met3r.met3r.met3r import MEt3R
+import math
+from submodules.met3r.met3r.met3r import MEt3R
 from torchvision import transforms
 from torch.nn import functional as F
 
-class Met3rLoss(torch.nn.Module):
-    
+class OODLoss(torch.nn.Module):
+    # max allowed dimension for the image, important for fitting in VRAM of 24gb VRAM GPU
+    MAX_ALLOWED_TOTAL_DIM = 640*640 
     DEVICE = 'cuda'        
     backbone_to_patch_size = {
         'dino16': 32,
@@ -31,10 +33,10 @@ class Met3rLoss(torch.nn.Module):
             use_mast3r_dust3r=True
         ).cuda()
 
-    def __set_scaling_factor(self, image_size: tuple[int, int]) -> float:
+    def __set_scaling_factor(self, image_size: tuple[int, int]):
         """
-        Get the scaling factor for the image size. This is important to make sure
-        the resulting image size divisible by 16.
+        Get the scaling factor for the image size. Allows to customize the scaling factor for different image sizes,
+        but also provides the automatic scaling factor that will fit the image in VRAM.
         """
         if image_size[0] == 540 and image_size[1] == 960:
             self.scaling_factor = 8 / 15
@@ -45,10 +47,15 @@ class Met3rLoss(torch.nn.Module):
         elif image_size[0] == 1706 and image_size[1] == 960: # iphone 14 pro
             self.scaling_factor = 1/3
         # in future if needed, provide more scaling factor for different sizes
-        else:
-            self.scaling_factor = 1.0
 
-        if image_size[0] * self.scaling_factor % self.patch_size != 0 or image_size[1] * self.scaling_factor % self.patch_size != 0:
+        elif image_size[0] == 1080 and image_size[1] == 1920:  # full HD
+            self.scaling_factor = 1/3
+        else:
+            # automatically determine a a scaling factor that will fit the image in VRAM
+            current_total_dim = image_size[0] * image_size[1]
+            self.scaling_factor = math.sqrt(Met3rLoss.MAX_ALLOWED_TOTAL_DIM / current_total_dim)
+
+        if int(image_size[0] * self.scaling_factor) % self.patch_size != 0 or int(image_size[1] * self.scaling_factor) % self.patch_size != 0:
             if not self.showed_warning_padding:
                 print(f"Warning: The image size {image_size} is not divisible by {self.patch_size}, padding will be applied")
                 self.showed_warning_padding = True
@@ -57,7 +64,7 @@ class Met3rLoss(torch.nn.Module):
     def preprocess_tensor(self, image: torch.Tensor, resize: bool = True) -> torch.Tensor:
         """
         Preprocess a tensor for MEt3R.
-        Normalize to [-1,1], centercrop + resize to result_size x result_size
+        Normalize to [-1,1] and resize if needed, using the scaling factor.
         """
         if image.shape[-1] in {1, 3}:  # a.k.a. if in format (H, W, C)
             image = image.permute(2, 0, 1)
@@ -72,6 +79,9 @@ class Met3rLoss(torch.nn.Module):
         return image
 
     def __transform_calibration_matrix(self, K: torch.Tensor) -> torch.Tensor:
+        """
+        Transform the calibration matrix with respect to the scaling factor.
+        """
         K_prim = torch.tensor([
             [self.scaling_factor * K[0, 0], 0, self.scaling_factor * K[0, 2]],
             [0, self.scaling_factor * K[1, 1], self.scaling_factor * K[1, 2]],
@@ -80,8 +90,10 @@ class Met3rLoss(torch.nn.Module):
         return K_prim
 
     def preprocess_depth(self, depth: torch.Tensor, resize: bool = True) -> torch.Tensor:
-        """Preprocess a depth tensor for MEt3R.
-        Normalize to [0,1], pad to the largest dimension of the image"""
+        """
+        Preprocess a depth tensor for MEt3R: Make the depth in shape of (1, H, W)
+        and resize with the scaling factor if needed.
+        """
         depth = depth.squeeze().unsqueeze(0)
         assert depth.dim() == 3
         depth = depth.cuda()
@@ -104,10 +116,8 @@ class Met3rLoss(torch.nn.Module):
         **kwargs):
         """
         Compute the MET3R loss between a ground truth image and an OOD rendered image.
-        The loss is computed only on the valid pixels.
-        The weight_map is used to weight the loss of the OOD pixels.
-        The weight_map is a tensor of the same size as the ground truth image.
-        The weight_map is a tensor of the same size as the ground truth image.
+        The loss is computed only on the valid pixels and areas where the images overlap.
+        The score_map represents the per-pixel error between the images.
 
         Args:
             gt_image (torch.Tensor): Ground truth image tensor of shape (H, W, 3)
@@ -118,11 +128,13 @@ class Met3rLoss(torch.nn.Module):
             ood_pose (torch.Tensor): Out-of-distribution pose tensor of shape (4, 4)
             calibration_matrix (torch.Tensor): Calibration matrix tensor of shape (3, 3)
             valid_mask (torch.Tensor, optional): Binary mask indicating valid pixels of shape (H, W, 1). Defaults to None.
-            weight_map (torch.Tensor, optional): Weight map for loss computation of shape (H, W, 1). Defaults to None.
+            use_oclusion_mask (bool, optional): Whether to use the oclusion mask. Defaults to True.
 
         Returns:
-            score: MET3R score
-            score_map: MET3R score map
+            tuple: A tuple containing:
+                - score (torch.Tensor): Mean MET3R score across valid pixels
+                - score_map (torch.Tensor): Per-pixel MET3R score map of shape (H, W, 1)
+                - overlap_mask (torch.Tensor): Binary mask indicating where images overlap, shape (H, W, 1)
         """
         self.orig_size = gt_image.shape[-3:-1]  # assumes (H, W, C)
         assert gt_image.shape == ood_rendered_image.shape
@@ -179,6 +191,9 @@ class Met3rLoss(torch.nn.Module):
         valid_mask: torch.Tensor | None = None,
         use_oclusion_mask: bool = True,
         **kwargs):
+        """
+        Experimental feature to calculate the multiview consistency RGB loss.
+        """
 
         assert gt_image.shape == ood_rendered_image.shape
         assert gt_pose.shape == ood_pose.shape == (4, 4)
