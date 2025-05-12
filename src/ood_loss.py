@@ -53,7 +53,7 @@ class OODLoss(torch.nn.Module):
         else:
             # automatically determine a a scaling factor that will fit the image in VRAM
             current_total_dim = image_size[0] * image_size[1]
-            self.scaling_factor = math.sqrt(Met3rLoss.MAX_ALLOWED_TOTAL_DIM / current_total_dim)
+            self.scaling_factor = math.sqrt(OODLoss.MAX_ALLOWED_TOTAL_DIM / current_total_dim)
 
         if int(image_size[0] * self.scaling_factor) % self.patch_size != 0 or int(image_size[1] * self.scaling_factor) % self.patch_size != 0:
             if not self.showed_warning_padding:
@@ -86,7 +86,7 @@ class OODLoss(torch.nn.Module):
             [self.scaling_factor * K[0, 0], 0, self.scaling_factor * K[0, 2]],
             [0, self.scaling_factor * K[1, 1], self.scaling_factor * K[1, 2]],
             [0, 0, 1]
-        ]).to(Met3rLoss.DEVICE)
+        ]).to(OODLoss.DEVICE)
         return K_prim
 
     def preprocess_depth(self, depth: torch.Tensor, resize: bool = True) -> torch.Tensor:
@@ -172,7 +172,7 @@ class OODLoss(torch.nn.Module):
             score_map = F.interpolate(score_map.unsqueeze(0), size=self.orig_size, mode='bilinear', align_corners=False).squeeze()
 
         if valid_mask is not None:
-            score_map = score_map * valid_mask.squeeze().to(Met3rLoss.DEVICE)
+            score_map = score_map * valid_mask.squeeze().to(OODLoss.DEVICE)
 
         score = score_map[score_map != 0].mean()
 
@@ -220,7 +220,7 @@ class OODLoss(torch.nn.Module):
         
         _, gt_projections = torch.unbind(projections, dim=1)
         if valid_mask is not None:
-            overlap_mask = overlap_mask * valid_mask.squeeze().to(Met3rLoss.DEVICE)
+            overlap_mask = overlap_mask * valid_mask.squeeze().to(OODLoss.DEVICE)
             
             
         l1_loss = l1_loss_map[overlap_mask == 1.0].sum() / (overlap_mask == 1.0).sum().clamp(min=1e-3)
@@ -253,7 +253,7 @@ class OODLoss(torch.nn.Module):
             **kwargs)
         
         if valid_mask is not None:
-            overlap_mask = overlap_mask * valid_mask.squeeze().to(Met3rLoss.DEVICE)
+            overlap_mask = overlap_mask * valid_mask.squeeze().to(OODLoss.DEVICE)
         
         l1_loss = l1_loss_map[overlap_mask == 1.0].sum() / (overlap_mask == 1.0).sum().clamp(min=1e-3)
         
