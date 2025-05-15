@@ -8,7 +8,7 @@ from src.utils import read_input_data, get_git_root
 
 ood_loss = OODLoss()
 # Read input data from directory
-data_dir = os.path.join(get_git_root(), 'sample_inputs')
+data_dir = os.path.join(get_git_root(), 'samples')
 
 # Load RGB images, depth maps, poses and calibrationx
 train_rgb, ood_train, \
