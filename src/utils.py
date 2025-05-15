@@ -31,7 +31,7 @@ def read_input_data(data_dir: str) -> torch.Tensor:
     """
     assert os.path.exists(data_dir), f"Data directory {data_dir} does not exist"
     assert os.path.exists(os.path.join(data_dir, 'train_rgb.png')), f"Train RGB image {os.path.join(data_dir, 'train_rgb.png')} does not exist"
-    assert os.path.exists(os.path.join(data_dir, 'ood_rgb.png')), f"OOD RGB image {os.path.join(data_dir, 'ood_rgb.png')} does not exist"
+    assert os.path.exists(os.path.join(data_dir, 'ood_train.png')), f"OOD RGB image {os.path.join(data_dir, 'ood_train.png')} does not exist"
 
     assert os.path.exists(os.path.join(data_dir, 'train_depth.npy')), f"Train depth image {os.path.join(data_dir, 'train_depth.npy')} does not exist"
     assert os.path.exists(os.path.join(data_dir, 'ood_depth.npy')), f"OOD depth image {os.path.join(data_dir, 'ood_depth.npy')} does not exist"
@@ -43,8 +43,8 @@ def read_input_data(data_dir: str) -> torch.Tensor:
 
     train_rgb = PIL.Image.open(os.path.join(data_dir, 'train_rgb.png'))
     train_rgb = torch.tensor(np.array(train_rgb)).cuda()
-    ood_rgb = PIL.Image.open(os.path.join(data_dir, 'ood_rgb.png'))
-    ood_rgb = torch.tensor(np.array(ood_rgb)).cuda()
+    ood_train = PIL.Image.open(os.path.join(data_dir, 'ood_train.png'))
+    ood_train = torch.tensor(np.array(ood_train)).cuda()
 
     train_depth = np.load(os.path.join(data_dir, 'train_depth.npy'))
     train_depth = torch.tensor(train_depth).cuda()
@@ -59,4 +59,4 @@ def read_input_data(data_dir: str) -> torch.Tensor:
     calibration_matrix = np.load(os.path.join(data_dir, 'calibration_matrix.npy'))
     calibration_matrix = torch.tensor(calibration_matrix).cuda()
     
-    return train_rgb, ood_rgb, train_depth, ood_depth, train_pose, ood_pose, calibration_matrix
+    return train_rgb, ood_train, train_depth, ood_depth, train_pose, ood_pose, calibration_matrix
