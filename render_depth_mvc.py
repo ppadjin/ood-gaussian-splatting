@@ -35,3 +35,13 @@ plt.title('Depth Multi-View Consistency (MVC) Score Heatmap')
 plt.axis('off')
 plt.savefig(os.path.join(data_dir, 'depth_mvc_score_map_heatmap.png'), bbox_inches='tight', dpi=300)
 plt.close()
+
+# Save occlusion mask visualization
+occlusion_mask = (1.0 - (oclusion_mask - oclusion_mask.min()) / (oclusion_mask.max() - oclusion_mask.min())).cpu().numpy().squeeze()  # (H,W,1) -> (H,W)
+plt.figure(figsize=(10, 8))
+plt.imshow(occlusion_mask, cmap='binary')
+plt.title('Occlusion Mask Visualization')
+plt.axis('off')
+plt.savefig(os.path.join(data_dir, 'occlusion_mask.png'), 
+            bbox_inches='tight', dpi=300)
+plt.close()
