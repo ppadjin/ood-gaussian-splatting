@@ -53,13 +53,18 @@ class OODLoss(torch.nn.Module):
         else:
             # automatically determine a a scaling factor that will fit the image in VRAM
             current_total_dim = image_size[0] * image_size[1]
-            self.scaling_factor = math.sqrt(OODLoss.MAX_ALLOWED_TOTAL_DIM / current_total_dim)
+            self.scaling_factor = min(1, math.sqrt(OODLoss.MAX_ALLOWED_TOTAL_DIM / current_total_dim))
 
         if int(image_size[0] * self.scaling_factor) % self.patch_size != 0 or int(image_size[1] * self.scaling_factor) % self.patch_size != 0:
             if not self.showed_warning_padding:
                 print(f"Warning: The image size {image_size} is not divisible by {self.patch_size}, padding will be applied")
                 self.showed_warning_padding = True
             self.pad = True
+            
+    def __rescale_by_scaling_factor(self, image: torch.Tensor) -> torch.Tensor:
+        result_size = (int(image.shape[1] * self.scaling_factor), int(image.shape[2] * self.scaling_factor))
+        image = transforms.Resize(result_size)(image)
+        return image
             
     def preprocess_tensor(self, image: torch.Tensor, resize: bool = True) -> torch.Tensor:
         """
@@ -73,8 +78,7 @@ class OODLoss(torch.nn.Module):
         image = image.cuda()
         
         if resize:
-            result_size = (int(image.shape[1] * self.scaling_factor), int(image.shape[2] * self.scaling_factor))
-            image = transforms.Resize(result_size)(image)
+            image = self.__rescale_by_scaling_factor(image)
         
         return image
 
@@ -98,8 +102,7 @@ class OODLoss(torch.nn.Module):
         assert depth.dim() == 3
         depth = depth.cuda()
         if resize:
-            result_size = (int(depth.shape[1] * self.scaling_factor), int(depth.shape[2] * self.scaling_factor))
-            depth = transforms.Resize(result_size)(depth)
+            depth = self.__rescale_by_scaling_factor(depth)
         return depth
 
     def forward(
@@ -148,6 +151,10 @@ class OODLoss(torch.nn.Module):
         calibration_matrix = self.__transform_calibration_matrix(calibration_matrix)
         gt_depth = self.preprocess_depth(gt_depth)
         ood_depth = self.preprocess_depth(ood_depth)
+        
+        if valid_mask is not None:
+            valid_mask = valid_mask.squeeze().unsqueeze(0).to(OODLoss.DEVICE)
+            valid_mask = self.__rescale_by_scaling_factor(valid_mask)
 
         _, overlap_mask, score_map = self.metric(
             train_rgb=gt_image,
