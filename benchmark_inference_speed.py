@@ -2,8 +2,8 @@ import os
 import time
 import argparse
 import torch
-from src.ood_loss import OODLoss
-from src.utils import read_input_data, get_git_root
+from oodgs.ood_loss import OODLoss
+from oodgs.utils import read_input_data, get_git_root
 from torchvision import transforms
 
 

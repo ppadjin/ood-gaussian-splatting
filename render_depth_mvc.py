@@ -2,8 +2,8 @@ import os
 import PIL
 import numpy as np
 import matplotlib.pyplot as plt
-from src.ood_loss import OODLoss
-from src.utils import read_input_data, get_git_root
+from oodgs.ood_loss import OODLoss
+from oodgs.utils import read_input_data, get_git_root
 
 
 ood_loss = OODLoss()
