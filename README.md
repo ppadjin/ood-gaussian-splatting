@@ -48,4 +48,5 @@ python benchmark_vram_usage.py {met3r | depth_mvc} --image-size <H>
 ## About 
 
 This project tries to improve the quality of Out-Of-Distribution (OOD) rendering in Gaussian Splatting models. The approach we chose is to regularize the Gaussian optimization by adding OOD regularization in the training pipeline. The illustration of our approach is shown in the image:
+
 ![Overall pipeline](media/ood_pipeline.png)
