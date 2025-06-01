@@ -13,10 +13,12 @@ https://github.com/user-attachments/assets/ec36259e-2244-4f81-84ca-2f21a220231a
 First, install all the dependencies and install the python package.
 
 ```
+# First, create conda enviroment
+conda create -n oodgs python=3.11 -y
+conda activate oodgs
+
 # Assumes CUDA 12.6
 ./setup.sh
-
-
 ```
 
 To generate the error map using Met3r loss, use:
