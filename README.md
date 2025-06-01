@@ -1,7 +1,7 @@
 # Gaussian Splatting Regularization for Improved Out-of-Distribution View Synthesis
 
 This repository provides the code for the Master's Thesis "Gaussian Splatting Regularization for Improved
-Out-of-Distribution View Synthesis". 
+Out-of-Distribution View Synthesis". A link to the paper will be provided soon!
 
 ## Demo
 
