@@ -1,5 +1,4 @@
-# Gaussian Splatting Regularization for Improved
-Out-of-Distribution View Synthesis
+# Gaussian Splatting Regularization for Improved Out-of-Distribution View Synthesis
 
 This repository provides the code for the Master's Thesis "Gaussian Splatting Regularization for Improved
 Out-of-Distribution View Synthesis". 
@@ -18,7 +17,6 @@ First, install all the dependencies and install the python package.
 # Assumes CUDA 12.6
 ./setup.sh
 
-pip install -e .
 
 ```
 
