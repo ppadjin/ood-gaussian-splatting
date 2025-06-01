@@ -2,7 +2,7 @@
 # Assumes CUDA 12.6
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -e .
 
 # Install met3r
 git submodule update --init --recursive
