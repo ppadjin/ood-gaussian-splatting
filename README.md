@@ -5,8 +5,7 @@ Out-of-Distribution View Synthesis".
 
 ## Demo
 
-<video src="media/ood-gs-kitti-demo.mp4" controls width="100%"></video>
-
+https://github.com/user-attachments/assets/ec36259e-2244-4f81-84ca-2f21a220231a
 
 
 ## Quick Start
