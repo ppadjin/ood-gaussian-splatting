@@ -50,3 +50,7 @@ python benchmark_vram_usage.py {met3r | depth_mvc} --image-size <H>
 This project tries to improve the quality of Out-Of-Distribution (OOD) rendering in Gaussian Splatting models. The approach we chose is to regularize the Gaussian optimization by adding OOD regularization in the training pipeline. The illustration of our approach is shown in the image:
 
 ![Overall pipeline](media/ood_pipeline.png)
+
+Two OOD Regularization methods were proposed: **Met3r Loss** and **Depth MVC Loss**. Met3r loss is a variation of the Met3r metric proposed in the https://arxiv.org/html/2501.06336v1, adapted and improved for this application. It tries to capture the discontinuity in features, while the Depth MVC loss tries to capture differences in the geometry between train and OOD views.
+
+## Results
