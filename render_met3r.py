@@ -7,10 +7,10 @@ from oodgs.utils import read_input_data, get_git_root
 
 
 ood_loss = OODLoss()
-# Read input data from directory
+
 data_dir = os.path.join(get_git_root(), 'samples')
 
-# Load RGB images, depth maps, poses and calibrationx
+
 train_rgb, ood_train, \
     train_depth, ood_depth, \
     train_pose, ood_pose, \
@@ -26,7 +26,7 @@ score, score_map, oclusion_mask = ood_loss(
             calibration_matrix,
             use_oclusion_mask=True)
 
-# save score_map as heatmap
+
 score_map = score_map.cpu().numpy().squeeze()  # Remove singleton dimension (H,W,1) -> (H,W)
 plt.figure(figsize=(10, 8))
 plt.imshow(score_map, cmap='viridis')
@@ -36,7 +36,7 @@ plt.axis('off')
 plt.savefig(os.path.join(data_dir, 'met3r_score_map_heatmap.png'), bbox_inches='tight', dpi=300)
 plt.close()
 
-# Save occlusion mask visualization
+
 oclusion_mask = oclusion_mask.cpu().numpy().squeeze()  # Remove singleton dimension (H,W,1) -> (H,W)
 plt.figure(figsize=(10, 8))
 plt.imshow(oclusion_mask, cmap='gray')
